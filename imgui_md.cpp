@@ -24,12 +24,13 @@
  */
 
 #include "imgui_md.h"
+#include "font_awesome_5.h"
 
 imgui_md::imgui_md()
 {
 	m_md.abi_version = 0;
 
-	m_md.flags = MD_FLAG_TABLES | MD_FLAG_UNDERLINE | MD_FLAG_STRIKETHROUGH;
+	m_md.flags = MD_FLAG_TABLES | MD_FLAG_UNDERLINE | MD_FLAG_STRIKETHROUGH | MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_TASKLISTS;
 
 	m_md.enter_block = [](MD_BLOCKTYPE t, void* d, void* u) {
 		return ((imgui_md*)u)->block(t, d, true);
@@ -83,7 +84,7 @@ void imgui_md::BLOCK_OL(const MD_BLOCK_OL_DETAIL* d, bool e)
 	}
 }
 
-void imgui_md::BLOCK_LI(const MD_BLOCK_LI_DETAIL*, bool e)
+void imgui_md::BLOCK_LI(const MD_BLOCK_LI_DETAIL*li, bool e)
 {
 	if (e) {
 		ImGui::NewLine();
@@ -93,14 +94,28 @@ void imgui_md::BLOCK_LI(const MD_BLOCK_LI_DETAIL*, bool e)
 			ImGui::Text("%d%c", nfo.cur_ol++, nfo.delim);
 			ImGui::SameLine();
 		} else {
-			if (nfo.delim == '*') {
-				float cx = ImGui::GetCursorPosX();
-				cx -= ImGui::GetStyle().FramePadding.x * 2;
-				ImGui::SetCursorPosX(cx);
-				ImGui::Bullet();
-			} else {
-				ImGui::Text("%c", nfo.delim);
+			if(li->is_task) {
+				switch(li->task_mark) {
+					case 'x':
+					case 'X':
+						ImGui::Text("%s", ICON_FA_CHECK_SQUARE);
+						break;
+					case ' ':
+					default:
+						ImGui::Text("%s", ICON_FA_SQUARE);
+						break;
+				}
 				ImGui::SameLine();
+			} else {
+				if (nfo.delim == '*') {
+					float cx = ImGui::GetCursorPosX();
+					cx -= ImGui::GetStyle().FramePadding.x * 2;
+					ImGui::SetCursorPosX(cx);
+					ImGui::Bullet();
+				} else {
+					ImGui::Text("%c", nfo.delim);
+					ImGui::SameLine();
+				}
 			}
 		}
 
